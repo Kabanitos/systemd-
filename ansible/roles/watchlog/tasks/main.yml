@@ -1,0 +1,82 @@
+---
+#- name: Copy file /etc/sysconfig/watchlog
+#  ansible.builtin.template:
+#    src: server.conf.j2
+#    dest: /etc/openvpn/server.conf
+#    owner: root
+#    group: root
+ #   mode: 0755
+
+- name: Copy file /etc/sysconfig/watchlog 
+  ansible.builtin.copy:
+    src: watchlog
+    dest: /etc/sysconfig/watchlog
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Create file watchlog.log
+  ansible.builtin.file:
+    path: /var/log/watchlog.log
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Copy file /opt/watchlog.sh
+  ansible.builtin.copy:
+    src: watchlog
+    dest: /opt/watchlog.sh
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Copy file /opt/watchlog.sh
+  ansible.builtin.copy:
+    src: watchlog
+    dest: /opt/watchlog.sh
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Copy unit file
+  ansible.builtin.copy:
+    src: {{ items }}
+    dest: /etc/systemd/system
+    owner: root
+    group: root
+    mode: 744
+  loop:
+    - { watchlog.service }
+    - {watchlog.timer}
+
+- name: Reload daemon
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Start service watchlog.timer
+  ansible.builtin.systemd:
+    name: watchlog.timer
+    state: started
+
+- name: install package epel-release
+  ansible.builtin.yum:
+      name: epel-release
+      update_cache: true
+
+- name: install package
+  ansible.builtin.yum:
+    name:
+      - spawn-fcgi
+      - php
+      - php-cli
+      - mod_fcgid
+      - httpd
+    state: latest
+    update_cache: true
+
+
+
+
+
+
+

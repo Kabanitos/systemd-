@@ -1,0 +1,45 @@
+- hosts: all
+  become: yes
+  become_user: root
+  tasks:
+  - name: install package
+    ansible.builtin.yum:
+      name: epel-release
+      update_cache: true
+
+  - name: install package
+    ansible.builtin.yum:
+      name:
+        - openvpn
+        - iperf3
+      state: latest
+      update_cache: true
+  
+  - name: SELinux 0
+    command: setenforce 0
+    ignore_errors: true
+    changed_when: false 
+
+  vars_files:
+    - vars.yml
+
+- hosts: server
+  become: yes
+  become_user: root
+  
+  roles:
+      - server
+
+- hosts: client
+  become: yes
+  become_user: root
+  
+  roles:
+      - client
+      
+  handlers:
+  - name: start openvpn
+    ansible.builtin.service:
+      name: openvpn@server
+      state: started
+      enabled: true
