@@ -25,10 +25,13 @@ Vagrant.configure("2") do |config|
         v.memory = boxconfig[:memory]
         v.cpus = boxconfig[:cpus]
       end
-      box.vm.provision "shell", inline: <<-SHELL
-          sed -i 's/^PasswordAuthentication.*$/PasswordAuthentication yes/' /etc/ssh/sshd_config
-          systemctl restart sshd.service
-  	  SHELL
+    
+      box.vm.provision "ansible" do |ansible|
+				ansible.playbook = "ansible/playbook.yml"
+				ansible.inventory_path = "ansible/inventory.yml"
+				ansible.host_key_checking = "false"
+				ansible.limit = "all"
+      end
     end
   end
 end

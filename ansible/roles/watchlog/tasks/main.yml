@@ -11,6 +11,7 @@
 - name: Create file watchlog.log
   ansible.builtin.file:
     path: /var/log/watchlog.log
+    state: touch
     owner: root
     group: root
     mode: '0755'
@@ -23,17 +24,9 @@
     group: root
     mode: 0755
 
-- name: Copy file /opt/watchlog.sh
-  ansible.builtin.copy:
-    src: watchlog
-    dest: /opt/watchlog.sh
-    owner: root
-    group: root
-    mode: 0755
-
 - name: Copy unit file
   ansible.builtin.copy:
-    src: {{ items }}
+    src: '{{item}}'
     dest: /etc/systemd/system
     owner: root
     group: root
@@ -84,13 +77,13 @@
   ansible.builtin.lineinfile:
     path: /usr/lib/systemd/system/httpd.service
     regexp: '^EnvironmentFile=/etc/sysconfig/httpd'
-    line: "EnvironmentFile=/etc/sysconfig/httpd-%I"
+    line: "EnvironmentFile=/etc/sysconfig/httpd-%i"
     backrefs: true
 
 - name: copy /etc/sysconfig/httpd
   ansible.builtin.copy:
     src: /etc/sysconfig/httpd
-    dest: /etc/sysconfig/httpd-{{ number }}
+    dest: /etc/sysconfig/httpd-{{item}} 
     remote_src: true
   loop:
     - { first }
@@ -98,13 +91,13 @@
 
 - name: change file options /etc/sysconfig/httpd-first and second
   ansible.builtin.lineinfile:
-    path: {{ item.path }}
-    line: {{ item.line }}
+    path: '{{ item.path }}'
+    line: '{{ item.line }}'
   loop:
     - path: /etc/sysconfig/httpd-first
       line: OPTIONS=-f conf/first.conf
     - path: /etc/sysconfig/httpd-second
       line: OPTIONS=-f conf/second.conf
 
-- name: 
+
 
