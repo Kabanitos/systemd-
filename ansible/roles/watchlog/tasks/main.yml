@@ -1,11 +1,4 @@
 ---
-#- name: Copy file /etc/sysconfig/watchlog
-#  ansible.builtin.template:
-#    src: server.conf.j2
-#    dest: /etc/openvpn/server.conf
-#    owner: root
-#    group: root
- #   mode: 0755
 
 - name: Copy file /etc/sysconfig/watchlog 
   ansible.builtin.copy:
@@ -47,7 +40,8 @@
     mode: 744
   loop:
     - { watchlog.service }
-    - {watchlog.timer}
+    - { watchlog.timer }
+    - { spawn-fcgi.service }
 
 - name: Reload daemon
   ansible.builtin.systemd:
@@ -74,9 +68,43 @@
     state: latest
     update_cache: true
 
+- name: Uncoment lines 
+  ansible.builtin.blockinfile:
+    path: /etc/sysconfig/spawn-fcgi
+    block: |
+      SOCKET=/var/run/php-fcgi.sock
+      OPTIONS="-u apache -g apache -s $SOCKET -S -M 0600 -C 32 -F 1 -- /usr/bin/php-cgi"
 
+- name: Start service spawn-fcgi
+  ansible.builtin.systemd:
+    name: spawn-fcgi
+    state: started
 
+- name: change unit httpd
+  ansible.builtin.lineinfile:
+    path: /usr/lib/systemd/system/httpd.service
+    regexp: '^EnvironmentFile=/etc/sysconfig/httpd'
+    line: "EnvironmentFile=/etc/sysconfig/httpd-%I"
+    backrefs: true
 
+- name: copy /etc/sysconfig/httpd
+  ansible.builtin.copy:
+    src: /etc/sysconfig/httpd
+    dest: /etc/sysconfig/httpd-{{ number }}
+    remote_src: true
+  loop:
+    - { first }
+    - { second }
 
+- name: change file options /etc/sysconfig/httpd-first and second
+  ansible.builtin.lineinfile:
+    path: {{ item.path }}
+    line: {{ item.line }}
+  loop:
+    - path: /etc/sysconfig/httpd-first
+      line: OPTIONS=-f conf/first.conf
+    - path: /etc/sysconfig/httpd-second
+      line: OPTIONS=-f conf/second.conf
 
+- name: 
 
