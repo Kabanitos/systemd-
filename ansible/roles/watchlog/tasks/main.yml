@@ -30,11 +30,11 @@
     dest: /etc/systemd/system
     owner: root
     group: root
-    mode: 744
+    mode: 0644
   loop:
-    - { watchlog.service }
-    - { watchlog.timer }
-    - { spawn-fcgi.service }
+    -  watchlog.service 
+    -  watchlog.timer 
+    -  spawn-fcgi.service 
 
 - name: Reload daemon
   ansible.builtin.systemd:
@@ -80,14 +80,20 @@
     line: "EnvironmentFile=/etc/sysconfig/httpd-%i"
     backrefs: true
 
+- name: copy /usr/lib/systemd/system/httpd.service
+  ansible.builtin.copy:
+    src: /usr/lib/systemd/system/httpd.service
+    dest: /usr/lib/systemd/system/httpd@.service
+    remote_src: true
+
 - name: copy /etc/sysconfig/httpd
   ansible.builtin.copy:
     src: /etc/sysconfig/httpd
     dest: /etc/sysconfig/httpd-{{item}} 
     remote_src: true
   loop:
-    - { first }
-    - { second }
+    -  first 
+    -  second 
 
 - name: change file options /etc/sysconfig/httpd-first and second
   ansible.builtin.lineinfile:
@@ -99,5 +105,32 @@
     - path: /etc/sysconfig/httpd-second
       line: OPTIONS=-f conf/second.conf
 
+- name: copy /etc/httpd/conf/httpd.conf
+  ansible.builtin.copy:
+    src: /etc/httpd/conf/httpd.conf
+    dest: /etc/httpd/conf/{{item}}.conf
+    remote_src: true
+  loop:
+    -  first 
+    -  second
 
+- name: change config /second.conf
+  ansible.builtin.lineinfile:
+    path: /etc/httpd/conf/second.conf
+    regexp: '^Listen 80'
+    line: |- 
+      Listen 8080 
+      PidFile /var/run/httpd-second.pid
+    state: present
 
+- name: Reload daemon
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: start daemon
+  ansible.builtin.systemd:
+    name: 'httpd@{{ item }}.service'
+    state: started
+  with_items:
+    - first
+    - second
