@@ -18,7 +18,7 @@
 
 - name: Copy file /opt/watchlog.sh
   ansible.builtin.copy:
-    src: watchlog
+    src: watchlog.sh
     dest: /opt/watchlog.sh
     owner: root
     group: root
